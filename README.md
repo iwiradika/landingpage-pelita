@@ -2,11 +2,40 @@
 
 Platform assessment kompetensi digital untuk calon pendidik kejuruan TI dengan teknologi AI dan visualisasi interaktif.
 
-## 🚀 Getting Started
+## 🚀 Quick Deploy to VPS via GitHub
+
+### 1. Push to GitHub
+```bash
+git init
+git add .
+git commit -m "Initial commit"
+git remote add origin https://github.com/USERNAME/REPO-NAME.git
+git push -u origin main
+```
+
+### 2. Setup GitHub Secrets
+Add these secrets in your GitHub repository (`Settings` → `Secrets and variables` → `Actions`):
+- `VPS_HOST`: Your VPS IP address
+- `VPS_USERNAME`: SSH username for VPS  
+- `VPS_SSH_KEY`: Private SSH key content
+- `VPS_PORT`: SSH port (default: 22)
+
+### 3. Deploy to VPS
+```bash
+# On your VPS, download and run deployment script
+curl -O https://raw.githubusercontent.com/USERNAME/REPO-NAME/main/deploy.sh
+chmod +x deploy.sh
+./deploy.sh full yourdomain.com
+```
+
+### 4. Auto Deploy
+Every push to `main` branch will automatically deploy to your VPS! ✨
+
+## 💻 Local Development
 
 ### Prerequisites
-- Node.js 18+ 
-- npm or yarn
+- Node.js 20+ 
+- npm
 
 ### Installation
 
@@ -27,22 +56,28 @@ npm run dev
 
 ```
 landingpage/
-├── public/                 # Static assets
-│   ├── logo.png           # PELITA logo
-│   ├── framwork.png       # Framework diagram
-│   ├── BukuPanduan.png    # Book cover image
+├── .github/
+│   └── workflows/
+│       └── deploy.yml          # GitHub Actions deployment
+├── public/                     # Static assets
+│   ├── logo.png               # PELITA logo
+│   ├── framwork.png           # Framework diagram
+│   ├── BukuPanduan.png        # Book cover image
 │   ├── BukuPanduan_PELITA.pdf # Guide document
-│   └── ...                # Technology logos
+│   └── ...                    # Technology logos
 ├── src/
-│   ├── app/              # Next.js App Router
-│   │   ├── globals.css   # Global styles & animations
-│   │   ├── layout.tsx    # Root layout with external scripts
-│   │   └── page.tsx      # Main landing page
-│   ├── components/       # Reusable components
-│   │   ├── AIChat.tsx    # AI chat component
-│   │   └── ui/           # UI components (shadcn/ui)
-│   └── lib/              # Utilities
-│       └── utils.ts      # Helper functions
+│   ├── app/                   # Next.js App Router
+│   │   ├── globals.css        # Global styles & animations
+│   │   ├── layout.tsx         # Root layout with external scripts
+│   │   └── page.tsx           # Main landing page
+│   ├── components/            # Reusable components
+│   │   ├── AIChat.tsx         # AI chat component
+│   │   └── ui/                # UI components (shadcn/ui)
+│   └── lib/                   # Utilities
+│       └── utils.ts           # Helper functions
+├── deploy.sh                  # VPS deployment script
+├── ecosystem.config.js        # PM2 configuration (generated)
+├── DEPLOYMENT_GUIDE.md        # Detailed deployment guide
 └── ...config files
 
 ```
@@ -84,9 +119,19 @@ The project uses:
 
 ## 📚 Documentation
 
+- [**DEPLOYMENT_GUIDE.md**](./DEPLOYMENT_GUIDE.md) - Complete deployment guide with GitHub Actions
 - [Framework Guide](public/BukuPanduan_PELITA.pdf) - Complete implementation guide
 - [Next.js Documentation](https://nextjs.org/docs)
 - [Tailwind CSS](https://tailwindcss.com/docs)
+
+## ⚡ Deployment Features
+
+- **Automatic Deployment**: Push to `main` triggers auto-deployment
+- **Health Checks**: Automatic service monitoring after deployment
+- **Rollback Support**: Easy rollback via script commands
+- **SSL Auto-Setup**: Let's Encrypt integration
+- **Performance Monitoring**: Built-in PM2 monitoring
+- **Backup System**: Automated daily backups
 
 ## 🤝 Contributing
 

@@ -1,17 +1,52 @@
-# 🚀 PELITA - Panduan Maintenance & Hosting VPS
+# 🚀 PELITA - Panduan Deployment GitHub ke VPS
 
-Panduan lengkap untuk deployment, maintenance, dan hosting aplikasi PELITA di VPS.
+Panduan lengkap untuk deployment otomatis aplikasi PELITA dari GitHub ke VPS menggunakan GitHub Actions.
 
 ## 📋 Daftar Isi
 
+- [Quick Start](#quick-start)
 - [Persyaratan Sistem](#persyaratan-sistem)
+- [Setup GitHub Repository](#setup-github-repository)
 - [Setup VPS](#setup-vps)
-- [Deployment](#deployment)
+- [GitHub Actions Deployment](#github-actions-deployment)
+- [Manual Deployment](#manual-deployment)
 - [Maintenance](#maintenance)
 - [Monitoring](#monitoring)
 - [Backup & Recovery](#backup--recovery)
 - [Troubleshooting](#troubleshooting)
 - [Security](#security)
+
+## ⚡ Quick Start
+
+### 1. Upload ke GitHub
+```bash
+# Inisialisasi Git repository (jika belum ada)
+git init
+git add .
+git commit -m "Initial commit"
+
+# Tambahkan remote GitHub
+git remote add origin https://github.com/USERNAME/REPO-NAME.git
+git push -u origin main
+```
+
+### 2. Setup VPS (One-time)
+```bash
+# Download dan jalankan script deployment
+curl -O https://raw.githubusercontent.com/USERNAME/REPO-NAME/main/deploy.sh
+chmod +x deploy.sh
+./deploy.sh full yourdomain.com
+```
+
+### 3. Configure GitHub Secrets
+Tambahkan secrets berikut di GitHub repository Anda (`Settings` → `Secrets and variables` → `Actions`):
+- `VPS_HOST`: IP address VPS Anda
+- `VPS_USERNAME`: Username SSH VPS 
+- `VPS_SSH_KEY`: Private SSH key untuk akses VPS
+- `VPS_PORT`: SSH port (default: 22)
+
+### 4. Deploy Otomatis
+Setiap push ke branch `main` akan otomatis deploy ke VPS!
 
 ## 🖥️ Persyaratan Sistem
 
@@ -27,6 +62,55 @@ Panduan lengkap untuk deployment, maintenance, dan hosting aplikasi PELITA di VP
 - **RAM**: 4GB
 - **Storage**: 40GB SSD
 - **OS**: Ubuntu 22.04 LTS
+
+## 🐙 Setup GitHub Repository
+
+### 1. Buat Repository di GitHub
+1. Buka [GitHub](https://github.com) dan buat repository baru
+2. Jangan inisialisasi dengan README, .gitignore, atau license (karena project sudah ada)
+3. Copy URL repository yang dibuat
+
+### 2. Upload Project ke GitHub
+```bash
+# Masuk ke direktori project
+cd /path/to/pelita-landingpage
+
+# Inisialisasi git (jika belum)
+git init
+
+# Tambah semua file
+git add .
+
+# Commit pertama
+git commit -m "Initial commit: PELITA landing page"
+
+# Tambahkan remote GitHub (ganti URL dengan repository Anda)
+git remote add origin https://github.com/USERNAME/REPO-NAME.git
+
+# Push ke GitHub
+git push -u origin main
+```
+
+### 3. Setup GitHub Secrets
+Buka repository di GitHub → `Settings` → `Secrets and variables` → `Actions` → `New repository secret`
+
+Tambahkan secrets berikut:
+- `VPS_HOST`: IP address VPS Anda (contoh: `192.168.1.100`)
+- `VPS_USERNAME`: Username SSH VPS (contoh: `ubuntu` atau `root`)
+- `VPS_SSH_KEY`: Private SSH key (isi file `~/.ssh/id_rsa`)
+- `VPS_PORT`: SSH port (default: `22`)
+
+### 4. Generate SSH Key (jika belum ada)
+```bash
+# Di local machine
+ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
+
+# Copy public key ke VPS
+ssh-copy-id username@vps-ip-address
+
+# Copy private key untuk GitHub secret
+cat ~/.ssh/id_rsa
+```
 
 ## 🔧 Setup VPS
 
@@ -70,17 +154,54 @@ sudo ufw allow 'Nginx Full'
 sudo ufw enable
 ```
 
-## 🚀 Deployment
+## 🚀 GitHub Actions Deployment
 
-### 1. Clone Repository
+### Otomatis Deployment
+GitHub Actions workflow akan otomatis:
+1. ✅ Install Node.js dan dependencies
+2. ✅ Build aplikasi
+3. ✅ Deploy ke VPS via SSH
+4. ✅ Restart PM2 process
+5. ✅ Health check
+
+### Workflow Triggers
+- Push ke branch `main` atau `master`
+- Pull request ke branch `main` atau `master`
+
+### Status Deployment
+- Cek status di tab `Actions` di GitHub repository
+- Logs detail tersedia untuk debugging
+
+## 📝 Manual Deployment
+
+### Using Deployment Script (Recommended)
+```bash
+# Download deployment script
+curl -O https://raw.githubusercontent.com/USERNAME/REPO-NAME/main/deploy.sh
+chmod +x deploy.sh
+
+# Full setup (one-time)
+./deploy.sh full yourdomain.com
+
+# Or step by step:
+./deploy.sh setup          # Initial VPS setup
+./deploy.sh deploy         # Deploy application  
+./deploy.sh nginx yourdomain.com  # Configure Nginx
+./deploy.sh ssl yourdomain.com    # Setup SSL
+./deploy.sh monitor        # Setup monitoring
+```
+
+### Manual Steps
+
+#### 1. Clone Repository
 ```bash
 cd /var/www/
 sudo mkdir pelita
 sudo chown $USER:$USER pelita
 cd pelita
 
-# Clone your repository
-git clone <your-repo-url> .
+# Clone your repository (ganti dengan URL repository Anda)
+git clone https://github.com/USERNAME/REPO-NAME.git .
 ```
 
 ### 2. Install Dependencies
