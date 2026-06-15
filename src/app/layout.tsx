@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -13,8 +14,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "PELITA - Platform Pengukuran Kompetensi Digital",
+  title: "pelita model",
   description: "Platform assessment kompetensi digital untuk calon pendidik kejuruan TI dengan teknologi AI dan visualisasi 3D interaktif",
+  icons: {
+    icon: '/pavicon_pelitamodel.png',
+    shortcut: '/pavicon_pelitamodel.png',
+    apple: '/pavicon_pelitamodel.png',
+  },
 };
 
 export default function RootLayout({
@@ -25,12 +31,15 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js" async></script>
         <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <Script 
+          src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"
+          strategy="lazyOnload"
+        />
         {children}
       </body>
     </html>
