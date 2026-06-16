@@ -2,897 +2,623 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { motion } from 'framer-motion';
-import { Mail, MapPin } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Mail, MapPin, Menu, X } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
 const MapSection = dynamic(() => import('@/components/MapSection'), {
-  loading: () => <div className="h-[400px] w-full bg-slate-800/50 rounded-lg animate-pulse" />
+  loading: () => <div className="h-[400px] w-full rounded-xl animate-pulse" style={{ background: 'rgba(15,23,42,0.5)' }} />,
 });
 
 const AIChat = dynamic(() => import('@/components/AIChat').then(mod => mod.AIChat), {
-  ssr: false
+  ssr: false,
 });
+
+/* ─── Static data (outside component to avoid re-creation on render) ─── */
+
+const INDICATOR_DATA: Record<string, { title: string; description: string }> = {
+  "1.1": { title: "Rekayasa Perangkat Lunak", description: "Kemampuan memahami konsep dasar pengembangan software, dapat menggunakan aplikasi pengembangan sederhana, dan memahami prinsip-prinsip rekayasa perangkat lunak untuk pembelajaran." },
+  "1.2": { title: "Pengembangan Gim", description: "Kemampuan mengembangkan game pembelajaran sederhana, memahami konsep game design dasar, dan menggunakan game engine untuk membuat konten edukatif interaktif." },
+  "1.3": { title: "Sistem Informasi, Jaringan, dan Aplikasi", description: "Kemampuan merancang sistem informasi sederhana, mengintegrasikan database dengan aplikasi, dan memahami konsep jaringan untuk mendukung sistem pembelajaran digital." },
+  "1.4": { title: "Teknik Komputer dan Jaringan", description: "Pemahaman tentang hardware komputer, jaringan internet, troubleshooting dasar, keamanan jaringan, dan kemampuan mengelola infrastruktur TI untuk pembelajaran." },
+  "1.5": { title: "Teknik Jaringan Akses Telekomunikasi", description: "Kemampuan memahami teknologi akses telekomunikasi, instalasi perangkat akses dasar, dan troubleshooting konektivitas untuk mendukung pembelajaran jarak jauh." },
+  "1.6": { title: "Teknik Transmisi Telekomunikasi", description: "Pemahaman tentang sistem transmisi data, teknologi komunikasi wireless dan kabel, serta kemampuan mengoptimalkan kualitas transmisi untuk pembelajaran digital." },
+  "2.1": { title: "Perancangan Pembelajaran Digital", description: "Merancang kegiatan pembelajaran digital, memilih platform dan media yang sesuai." },
+  "2.2": { title: "Pembelajaran Kolaboratif", description: "Memfasilitasi kerja sama bermakna dalam lingkungan virtual menggunakan berbagai tools." },
+  "2.3": { title: "Desain Pembelajaran Mandiri", description: "Mengembangkan kemampuan siswa belajar secara otonom melalui platform dan modul interaktif." },
+  "2.4": { title: "Strategi Asesmen dan Umpan Balik Digital", description: "Mengintegrasikan evaluasi autentik berbasis kinerja, menganalisis data pembelajaran, dan memberikan umpan balik yang personal dan konstruktif." },
+  "3.1": { title: "Etika Digital", description: "Memahami dan mengajarkan implikasi sosial teknologi, hak cipta, privasi, dan pengambilan keputusan etis." },
+  "3.2": { title: "Praktik Reflektif", description: "Kemampuan melakukan evaluasi diri sistematis terhadap penggunaan teknologi untuk perbaikan berkelanjutan." },
+  "3.3": { title: "Hubungan dengan Industri", description: "Menjalin kolaborasi dengan praktisi industri untuk memastikan relevansi kurikulum dengan kebutuhan profesional aktual." },
+  "3.4": { title: "Kepemimpinan Digital", description: "Kemampuan menjadi agen perubahan dalam transformasi digital di lingkungan pendidikan." },
+  "4.1": { title: "Aksesibilitas & Inklusi", description: "Kemampuan memastikan teknologi dan konten digital dapat diakses oleh semua siswa termasuk yang berkebutuhan khusus, serta memahami prinsip universal design dalam pembelajaran digital." },
+  "4.2": { title: "Jaringan Profesional", description: "Kemampuan membangun dan memelihara jaringan profesional melalui platform digital, berpartisipasi dalam komunitas online, dan berbagi praktik baik dengan sesama pendidik." },
+  "4.3": { title: "Kolaborasi Digital", description: "Kemampuan bekerja sama secara efektif dengan kolega, siswa, dan stakeholder lainnya menggunakan berbagai tools kolaborasi digital dan platform komunikasi online." },
+  "4.4": { title: "Komunikasi Digital", description: "Kemampuan berkomunikasi secara efektif melalui berbagai medium digital, memahami etika komunikasi online, dan mampu menyampaikan informasi dengan jelas dan persuasif." },
+};
+
+const TECH_LOGOS = [
+  { src: "/react_logo.png", alt: "React" },
+  { src: "/nodejs_logo.png", alt: "Node.js" },
+  { src: "/mongodblogo.png.jpeg", alt: "MongoDB" },
+  { src: "/R_logo-2.svg", alt: "R" },
+];
+
+const NAV_LINKS = [
+  { href: "#about", label: "Framework" },
+  { href: "#panduan", label: "Model" },
+  { href: "#location", label: "Location" },
+  { href: "#contact", label: "Contact" },
+];
+
+/* 4 competency dimensions with cohesive color scheme */
+const DIMENSIONS = [
+  {
+    id: "1",
+    label: "Information Technology Content",
+    color: "violet",
+    dotColor: "#7C3AED",
+    indicators: [
+      { id: "1.1", title: "Software Engineering" },
+      { id: "1.2", title: "Game Development" },
+      { id: "1.3", title: "Information Systems, Networks & Applications" },
+      { id: "1.4", title: "Computer & Network Engineering" },
+      { id: "1.5", title: "Telecommunication Access Network" },
+      { id: "1.6", title: "Telecommunication Transmission" },
+    ],
+    activeClass: "bg-violet-500/20 border-violet-500/50 text-violet-200",
+    hoverClass: "hover:bg-violet-500/15 hover:border-violet-400/40 hover:text-violet-100",
+    textClass: "text-violet-300",
+    badgeGradient: "from-violet-600 to-violet-800",
+    badgeShadow: "shadow-violet-500/30",
+    headerText: "text-violet-400",
+    ringGlow: "rgba(124,58,237,0.2)",
+  },
+  {
+    id: "2",
+    label: "Digital Pedagogy",
+    color: "teal",
+    dotColor: "#0D9488",
+    indicators: [
+      { id: "2.1", title: "Digital Learning Design" },
+      { id: "2.2", title: "Collaborative Learning" },
+      { id: "2.3", title: "Self-Directed Learning Design" },
+      { id: "2.4", title: "Digital Assessment & Feedback Strategies" },
+    ],
+    activeClass: "bg-teal-500/20 border-teal-500/50 text-teal-200",
+    hoverClass: "hover:bg-teal-500/15 hover:border-teal-400/40 hover:text-teal-100",
+    textClass: "text-teal-300",
+    badgeGradient: "from-teal-600 to-teal-800",
+    badgeShadow: "shadow-teal-500/30",
+    headerText: "text-teal-400",
+    ringGlow: "rgba(13,148,136,0.2)",
+  },
+  {
+    id: "3",
+    label: "Digital Professionalism",
+    color: "indigo",
+    dotColor: "#4F46E5",
+    indicators: [
+      { id: "3.1", title: "Digital Ethics" },
+      { id: "3.2", title: "Reflective Practice" },
+      { id: "3.3", title: "Industry Relations" },
+      { id: "3.4", title: "Digital Leadership" },
+    ],
+    activeClass: "bg-indigo-500/20 border-indigo-500/50 text-indigo-200",
+    hoverClass: "hover:bg-indigo-500/15 hover:border-indigo-400/40 hover:text-indigo-100",
+    textClass: "text-indigo-300",
+    badgeGradient: "from-indigo-600 to-indigo-800",
+    badgeShadow: "shadow-indigo-500/30",
+    headerText: "text-indigo-400",
+    ringGlow: "rgba(79,70,229,0.2)",
+  },
+  {
+    id: "4",
+    label: "Digital Social Engagement",
+    color: "cyan",
+    dotColor: "#0891B2",
+    indicators: [
+      { id: "4.1", title: "Accessibility & Inclusion" },
+      { id: "4.2", title: "Professional Networking" },
+      { id: "4.3", title: "Digital Collaboration" },
+      { id: "4.4", title: "Digital Communication" },
+    ],
+    activeClass: "bg-cyan-500/20 border-cyan-500/50 text-cyan-200",
+    hoverClass: "hover:bg-cyan-500/15 hover:border-cyan-400/40 hover:text-cyan-100",
+    textClass: "text-cyan-300",
+    badgeGradient: "from-cyan-600 to-cyan-800",
+    badgeShadow: "shadow-cyan-500/30",
+    headerText: "text-cyan-400",
+    ringGlow: "rgba(8,145,178,0.2)",
+  },
+];
+
+/* ─── Component ──────────────────────────────────────────────────────────── */
 
 export default function Home() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedIndicator, setSelectedIndicator] = useState<string | null>(null);
   const [showHeader, setShowHeader] = useState(false);
-
-  // Data indikator kisi-kisi
-  const indicatorData = {
-    "1.1": {
-      title: "Rekayasa Perangkat Lunak",
-      description: "Kemampuan memahami konsep dasar pengembangan software, dapat menggunakan aplikasi pengembangan sederhana, dan memahami prinsip-prinsip rekayasa perangkat lunak untuk pembelajaran."
-    },
-    "1.2": {
-      title: "Pengembangan Gim", 
-      description: "Kemampuan mengembangkan game pembelajaran sederhana, memahami konsep game design dasar, dan menggunakan game engine untuk membuat konten edukatif interaktif."
-    },
-    "1.3": {
-      title: "Sistem Informasi, Jaringan, dan Aplikasi",
-      description: "Kemampuan merancang sistem informasi sederhana, mengintegrasikan database dengan aplikasi, dan memahami konsep jaringan untuk mendukung sistem pembelajaran digital."
-    },
-    "1.4": {
-      title: "Teknik Komputer dan Jaringan",
-      description: "Pemahaman tentang hardware komputer, jaringan internet, troubleshooting dasar, keamanan jaringan, dan kemampuan mengelola infrastruktur TI untuk pembelajaran."
-    },
-    "1.5": {
-      title: "Teknik Jaringan Akses Telekomunikasi",
-      description: "Kemampuan memahami teknologi akses telekomunikasi, instalasi perangkat akses dasar, dan troubleshooting konektivitas untuk mendukung pembelajaran jarak jauh."
-    },
-    "1.6": {
-      title: "Teknik Transmisi Telekomunikasi",
-      description: "Pemahaman tentang sistem transmisi data, teknologi komunikasi wireless dan kabel, serta kemampuan mengoptimalkan kualitas transmisi untuk pembelajaran digital."
-    },
-    "2.1": {
-      title: "Perancangan Pembelajaran Digital",
-      description: "Merancang kegiatan pembelajaran digital, memilih platform dan media yang sesuai."
-    },
-    "2.2": {
-      title: "Pembelajaran Kolaboratif",
-      description: "Memfasilitasi kerja sama bermakna dalam lingkungan virtual menggunakan berbagai tools."
-    },
-    "2.3": {
-      title: "Desain Pembelajaran Mandiri",
-      description: "Mengembangkan kemampuan siswa belajar secara otonom melalui platform dan modul interaktif."
-    },
-    "2.4": {
-      title: "Strategi Asesmen dan Umpan Balik Digital",
-      description: "Mengintegrasikan evaluasi autentik berbasis kinerja, menganalisis data pembelajaran, dan memberikan umpan balik yang personal dan konstruktif."
-    },
-    "3.1": {
-      title: "Etika Digital",
-      description: "Memahami dan mengajarkan implikasi sosial teknologi, hak cipta, privasi, dan pengambilan keputusan etis."
-    },
-    "3.2": {
-      title: "Praktik Reflektif",
-      description: "Kemampuan melakukan evaluasi diri sistematis terhadap penggunaan teknologi untuk perbaikan berkelanjutan."
-    },
-    "3.3": {
-      title: "Hubungan dengan Industri",
-      description: "Menjalin kolaborasi dengan praktisi industri untuk memastikan relevansi kurikulum dengan kebutuhan profesional aktual."
-    },
-    "3.4": {
-      title: "Kepemimpinan Digital",
-      description: "Kemampuan menjadi agen perubahan dalam transformasi digital di lingkungan pendidikan."
-    },
-    "4.1": {
-      title: "Aksesibilitas & Inklusi",
-      description: "Kemampuan memastikan teknologi dan konten digital dapat diakses oleh semua siswa termasuk yang berkebutuhan khusus, serta memahami prinsip universal design dalam pembelajaran digital."
-    },
-    "4.2": {
-      title: "Jaringan Profesional",
-      description: "Kemampuan membangun dan memelihara jaringan profesional melalui platform digital, berpartisipasi dalam komunitas online, dan berbagi praktik baik dengan sesama pendidik."
-    },
-    "4.3": {
-      title: "Kolaborasi Digital",
-      description: "Kemampuan bekerja sama secara efektif dengan kolega, siswa, dan stakeholder lainnya menggunakan berbagai tools kolaborasi digital dan platform komunikasi online."
-    },
-    "4.4": {
-      title: "Komunikasi Digital",
-      description: "Kemampuan berkomunikasi secara efektif melalui berbagai medium digital, memahami etika komunikasi online, dan mampu menyampaikan informasi dengan jelas dan persuasif."
-    }
-  };
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    // Scroll to top on component mount
     window.scrollTo(0, 0);
-    
-    // Handle scroll to show/hide header
     let ticking = false;
     const handleScroll = () => {
       if (!ticking) {
         window.requestAnimationFrame(() => {
-          const scrollY = window.scrollY;
-          setShowHeader(scrollY > window.innerHeight * 0.8);
+          setShowHeader(window.scrollY > window.innerHeight * 0.8);
           ticking = false;
         });
         ticking = true;
       }
     };
-
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   useEffect(() => {
-    // Simple scroll-based animations using Intersection Observer
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('animate-fade-in-up');
-          }
+          if (entry.isIntersecting) entry.target.classList.add('animate-fade-in-up');
         });
       },
       { threshold: 0.1 }
     );
-
-    const heroElements = document.querySelectorAll('.hero-animate');
-    const featureCards = document.querySelectorAll('.feature-card');
-    
-    [...heroElements, ...featureCards].forEach((el) => {
-      observer.observe(el);
-    });
-
+    document.querySelectorAll('.hero-animate, .feature-card').forEach((el) => observer.observe(el));
     return () => observer.disconnect();
   }, []);
 
+  const selectedDim = selectedIndicator
+    ? DIMENSIONS.find(d => selectedIndicator.startsWith(d.id + '.'))
+    : null;
+
   return (
     <>
-    <div className="min-h-screen bg-black relative overflow-hidden">
-      
-      {/* Header - only shows after scroll */}
-      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        showHeader 
-          ? 'translate-y-0 bg-black/20 backdrop-blur-md shadow-sm border-b border-white/10' 
-          : '-translate-y-full'
-      }`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <div className="w-30 h-20 overflow-hidden rounded-lg">
-                <Image
-                  src="/logo.png"
-                  alt="PELITA Logo"
-                  width={120}
-                  height={120}
-                  className="object-cover"
-                  style={{ 
-                    objectPosition: 'center',
-                    transform: 'translateY(-11px)'
-                  }}
-                />
+      <div className="min-h-screen relative overflow-hidden" style={{ background: 'var(--bg-base)' }}>
+
+        {/* ── Sticky Header ──────────────────────────────────────────── */}
+        <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+          showHeader ? 'translate-y-0 backdrop-blur-md border-b border-white/[0.06]' : '-translate-y-full'
+        }`} style={showHeader ? { background: 'rgba(2,8,23,0.85)' } : {}}>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center" style={{ width: 44, height: 44 }}>
+                  <Image src="/Logo_undiksha.png" alt="Undiksha Logo" width={44} height={44} className="w-full h-full object-contain" />
+                </div>
+                <div className="w-px h-7 bg-white/15 rounded-full" />
+                <div className="flex items-center justify-center" style={{ width: 44, height: 44 }}>
+                  <Image src="/logo_uny.png" alt="UNY Logo" width={44} height={44} className="w-full h-full object-contain" />
+                </div>
+                <div className="w-px h-7 bg-white/15 rounded-full" />
+                <div className="flex items-center justify-center" style={{ width: 44, height: 44 }}>
+                  <Image src="/logo_pelita.png" alt="PELITA Logo" width={44} height={44} className="w-full h-full object-contain" />
+                </div>
+              </div>
+              <div className="flex items-center gap-6">
+                <nav className="hidden md:flex items-center gap-7">
+                  {NAV_LINKS.map((link) => (
+                    <a key={link.href} href={link.href}
+                      className="text-sm font-medium text-slate-400 hover:text-violet-300 transition-colors">
+                      {link.label}
+                    </a>
+                  ))}
+                </nav>
+                <a href="https://assessment.pelita-framework.cloud" target="_blank" rel="noopener noreferrer"
+                  className="hidden md:inline-block btn-primary text-sm px-5 py-2.5">
+                  Try PELITA
+                </a>
+                <button className="md:hidden text-slate-400 hover:text-white transition-colors"
+                  onClick={() => setMobileMenuOpen(v => !v)} aria-label="Toggle menu">
+                  {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                </button>
               </div>
             </div>
-            <div className="flex items-center space-x-8">
-              <nav className="hidden md:flex space-x-8">
-                <a href="#about" className="text-gray-300 hover:text-purple-400 transition-colors">Framework</a>
-                <a href="#panduan" className="text-gray-300 hover:text-purple-400 transition-colors">Model</a>
-                <a href="#location" className="text-gray-300 hover:text-purple-400 transition-colors">Lokasi</a>
-                <a href="#contact" className="text-gray-300 hover:text-purple-400 transition-colors">Kontak</a>
-              </nav>
-              <a 
-                href="https://assessment.pelita-framework.cloud" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-6 py-2.5 rounded-full font-semibold text-sm transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-purple-500/25 inline-block"
-              >
-                COBA PELITA SEKARANG
-              </a>
-            </div>
           </div>
-        </div>
-      </header>
 
-      {/* Hero Landing Section - With YouTube Video Background */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* YouTube Video Background */}
-        <div className="absolute inset-0 w-full h-full">
-          <iframe 
-            width="100%" 
-            height="100%" 
-            src="https://www.youtube.com/embed/WqrE23yAIBI?si=pC0vDgdXWRmEyf7c&autoplay=1&mute=1&loop=1&playlist=WqrE23yAIBI&controls=0&showinfo=0&rel=0&iv_load_policy=3&modestbranding=1"
-            title="YouTube video player" 
-            frameBorder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-            referrerPolicy="strict-origin-when-cross-origin" 
-            allowFullScreen
-            style={{ 
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              width: '120vw',
-              height: '67.5vw', // 16:9 aspect ratio with 20% zoom
-              minHeight: '120vh',
-              minWidth: '213.33vh', // 16:9 aspect ratio with 20% zoom
-              transform: 'translate(-50%, -50%)',
-              pointerEvents: 'none',
-              border: 'none'
-            }}
-          />
-        </div>
-        
-        {/* Dark overlay for better text readability */}
-        <div className="absolute inset-0 bg-black/60"></div>
-        
-        {/* Hero Content */}
-        <div className="relative z-10 text-center px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
-          <motion.h1
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.5 }}
-            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6"
-          >
-            <span className="bg-gradient-to-r from-purple-400 via-purple-300 to-purple-500 bg-clip-text text-transparent">
-              Pengukuran Online Kompetensi Digital
-            </span>
-          </motion.h1>
-          
-          <motion.p
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.8 }}
-            className="text-xl sm:text-2xl md:text-3xl font-medium mb-8"
-          >
-            <span className="bg-gradient-to-r from-purple-300 via-purple-200 to-purple-400 bg-clip-text text-transparent">
-              Untuk Calon Pendidik Kejuruan Bidang Keahlian Teknologi Informasi
-            </span>
-          </motion.p>
-          
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 1.1 }}
-            className="flex flex-col sm:flex-row gap-4 justify-center"
-          >
-            <a 
-              href="https://assessment.pelita-framework.cloud" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-8 py-4 rounded-full font-semibold text-lg transform hover:scale-105 transition-all duration-300 shadow-xl hover:shadow-purple-500/30 inline-block"
-            >
-              Mulai Assessment
-            </a>
-            <a 
-              href="#about" 
-              className="border-2 border-purple-400 text-purple-400 hover:bg-purple-400 hover:text-white px-8 py-4 rounded-full font-semibold text-lg transition-all duration-300 inline-block"
-            >
-              Pelajari Framework
-            </a>
-          </motion.div>
-        </div>
-        
-        {/* Scroll Down Indicator */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1, delay: 2.5 }}
-          className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
-        >
-          <div className="flex flex-col items-center">
-            <motion.div
-              animate={{ y: [0, 10, 0] }}
-              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-              className="w-8 h-8 border-2 border-white/60 rounded-full flex items-center justify-center bg-white/5 backdrop-blur-sm hover:bg-white/10 transition-colors cursor-pointer"
-            >
-              <motion.div
-                animate={{ y: [0, 3, 0] }}
-                transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-                className="w-0 h-0 border-l-[6px] border-r-[6px] border-t-[8px] border-l-transparent border-r-transparent border-t-white/80"
-                style={{ transform: 'rotate(180deg)' }}
-              />
+          <AnimatePresence>
+            {mobileMenuOpen && (
+              <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.18 }}
+                className="md:hidden border-t border-white/[0.06] px-4 py-4 space-y-2"
+                style={{ background: 'rgba(2,8,23,0.95)' }}>
+                {NAV_LINKS.map((link) => (
+                  <a key={link.href} href={link.href} onClick={() => setMobileMenuOpen(false)}
+                    className="block py-2.5 text-base font-medium text-slate-300 hover:text-violet-300 transition-colors">
+                    {link.label}
+                  </a>
+                ))}
+                <a href="https://assessment.pelita-framework.cloud" target="_blank" rel="noopener noreferrer"
+                  className="block mt-3 btn-primary text-center text-sm">
+                  Try PELITA Now
+                </a>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </header>
+
+        {/* ── Hero ───────────────────────────────────────────────────── */}
+        <section className="relative min-h-screen flex items-center justify-center overflow-hidden section-hero">
+          {/* Video background */}
+          <div className="absolute inset-0 w-full h-full">
+            <iframe
+              width="100%" height="100%"
+              src="https://www.youtube.com/embed/WqrE23yAIBI?si=pC0vDgdXWRmEyf7c&autoplay=1&mute=1&loop=1&playlist=WqrE23yAIBI&controls=0&showinfo=0&rel=0&iv_load_policy=3&modestbranding=1"
+              title="PELITA background"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerPolicy="strict-origin-when-cross-origin"
+              allowFullScreen
+              style={{
+                position: 'absolute', top: '50%', left: '50%',
+                width: '120vw', height: '67.5vw',
+                minHeight: '120vh', minWidth: '213.33vh',
+                transform: 'translate(-50%, -50%)',
+                pointerEvents: 'none', border: 'none',
+              }}
+            />
+          </div>
+          {/* Overlay */}
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(2,8,23,0.55) 0%, rgba(2,8,23,0.7) 100%)' }} />
+
+          {/* Hero content */}
+          <div className="relative z-10 text-center px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3 }}
+              className="mb-6 flex justify-center">
+              <span className="pill-badge">Digital Assessment Platform</span>
+            </motion.div>
+
+            <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, delay: 0.5 }}
+              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-5 leading-tight">
+              <span className="gradient-text-violet">Online Assessment of</span>
+              <br />
+              <span className="text-white">Digital Competency</span>
+            </motion.h1>
+
+            <motion.p initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, delay: 0.75 }}
+              className="text-lg sm:text-xl md:text-2xl font-medium mb-10 text-slate-300 max-w-3xl mx-auto">
+              For Prospective Vocational Educators in Information Technology
+            </motion.p>
+
+            <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, delay: 1 }}
+              className="flex flex-col sm:flex-row gap-4 justify-center">
+              <a href="https://assessment.pelita-framework.cloud" target="_blank" rel="noopener noreferrer"
+                className="btn-primary text-base glow-pulse">
+                Start Assessment
+              </a>
+              <a href="#about" className="btn-outline text-base">
+                Explore Framework
+              </a>
             </motion.div>
           </div>
-        </motion.div>
-      </section>
 
+          {/* Scroll indicator */}
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1, delay: 2.2 }}
+            className="absolute bottom-8 left-1/2 -translate-x-1/2">
+            <motion.div animate={{ y: [0, 8, 0] }} transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+              className="w-8 h-8 rounded-full border border-white/30 flex items-center justify-center backdrop-blur-sm"
+              style={{ background: 'rgba(255,255,255,0.05)' }}>
+              <motion.div animate={{ y: [0, 3, 0] }} transition={{ duration: 1.5, repeat: Infinity }}
+                className="w-0 h-0 border-l-[5px] border-r-[5px] border-t-[7px] border-l-transparent border-r-transparent border-t-white/70"
+                style={{ transform: 'rotate(180deg)' }} />
+            </motion.div>
+          </motion.div>
+        </section>
 
-      {/* Framework Section */}
-      <section id="about" className="relative w-full bg-black py-20 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            {/* Left Side - Framework Image */}
-            <div className="relative">
-              <motion.div
-                initial={{ opacity: 0, x: -30 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.8 }}
-                viewport={{ once: true }}
-                className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 shadow-xl hover:shadow-2xl transition-shadow duration-300"
-              >
-                <div className="relative overflow-hidden rounded-xl cursor-pointer group" onClick={() => setIsFullscreen(true)}>
-                  <Image
-                    src="/framwork.png"
-                    alt="Framework Asesmen PELITA"
-                    width={600}
-                    height={400}
-                    className="w-full h-auto object-cover rounded-xl shadow-lg hover:shadow-2xl transition-shadow duration-300"
-                  />
-                  {/* Click overlay hint */}
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/90 text-black px-4 py-2 rounded-full text-sm font-medium">
-                      Klik untuk memperbesar
+        {/* ── Framework Section ──────────────────────────────────────── */}
+        <section id="about" className="relative w-full py-24 overflow-hidden section-a">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-14 items-center">
+              {/* Image */}
+              <motion.div initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.8 }} viewport={{ once: true }}>
+                <div className="glass-card glass-card-hover p-6 cursor-pointer group"
+                  onClick={() => setIsFullscreen(true)}>
+                  <div className="relative overflow-hidden rounded-xl">
+                    <Image src="/framwork.png" alt="Framework Asesmen PELITA" width={600} height={400}
+                      className="w-full h-auto object-cover rounded-xl transition-transform duration-500 group-hover:scale-[1.02]" />
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                      style={{ background: 'rgba(2,8,23,0.3)' }}>
+                      <span className="bg-white/90 text-slate-900 px-4 py-2 rounded-full text-sm font-semibold">
+                        Klik untuk memperbesar
+                      </span>
                     </div>
                   </div>
                 </div>
               </motion.div>
-            </div>
 
-            {/* Right Side - Description */}
-            <div className="space-y-6">
-              <motion.div
-                initial={{ opacity: 0, x: 30 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.8 }}
-                viewport={{ once: true }}
-              >
-                <h3 className="text-4xl font-bold text-white mb-6">
-                  Framework PELITA
-                </h3>
-                <p className="text-lg text-gray-300 leading-relaxed mb-4">
-                  Framework PELITA (Pengukuran Online Kompetensi Digital) mengukur kompetensi digital calon pendidik melalui empat dimensi terintegrasi:
-                </p>
-                <div className="space-y-3 text-gray-300">
-                  <div className="flex items-start space-x-3">
-                    <div className="w-2 h-2 bg-sky-400 rounded-full mt-2 flex-shrink-0"></div>
-                    <p><span className="font-semibold text-sky-400">Konten Teknologi Informasi:</span> Pengetahuan konten teknologi informasi</p>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <div className="w-2 h-2 bg-blue-600 rounded-full mt-2 flex-shrink-0"></div>
-                    <p><span className="font-semibold text-blue-600">Pedagogik Digital:</span> Kemampuan menerapkan pembelajaran berbasis teknologi</p>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <div className="w-2 h-2 bg-pink-400 rounded-full mt-2 flex-shrink-0"></div>
-                    <p><span className="font-semibold text-pink-400">Profesionalisme Digital:</span> Sikap profesional dalam pemanfaatan teknologi</p>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <div className="w-2 h-2 bg-purple-500 rounded-full mt-2 flex-shrink-0"></div>
-                    <p><span className="font-semibold text-purple-500">Keterlibatan Sosial Digital:</span> Kemampuan berkolaborasi melalui platform digital</p>
-                  </div>
+              {/* Text */}
+              <motion.div initial={{ opacity: 0, x: 30 }} whileInView={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.8 }} viewport={{ once: true }} className="space-y-6">
+                <div>
+                  <div className="pill-badge mb-4">Framework</div>
+                  <h3 className="text-4xl font-bold text-white mb-4">PELITA Framework</h3>
+                  <div className="accent-line mb-6" />
+                  <p className="text-slate-400 leading-relaxed mb-6">
+                    The PELITA framework measures digital competency of prospective educators across four integrated dimensions:
+                  </p>
                 </div>
-                <p className="text-sm text-gray-400 mt-4 leading-relaxed">
-                  Pengukuran dilakukan melalui lima level taksonomi teknologi dengan konteks pengetahuan teknologi informasi dan AI, memberikan penilaian holistik kesiapan calon pendidik di era digital.
+                <div className="space-y-3.5">
+                  {[
+                    { dot: "#7C3AED", label: "IT Content Knowledge:", desc: "Mastery of information technology content" },
+                    { dot: "#0D9488", label: "Digital Pedagogy:", desc: "Ability to apply technology-based learning" },
+                    { dot: "#4F46E5", label: "Digital Professionalism:", desc: "Professional conduct in technology use" },
+                    { dot: "#0891B2", label: "Digital Social Engagement:", desc: "Ability to collaborate through digital platforms" },
+                  ].map((item) => (
+                    <div key={item.label} className="flex items-start gap-3">
+                      <span className="mt-2 w-2 h-2 rounded-full flex-shrink-0" style={{ background: item.dot }} />
+                      <p className="text-slate-300 text-sm leading-relaxed">
+                        <span className="font-semibold text-white">{item.label}</span>{' '}{item.desc}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-slate-500 leading-relaxed pt-2">
+                  Assessment is conducted across five levels of technology taxonomy within an IT and AI knowledge context, providing a holistic evaluation of educator readiness in the digital era.
                 </p>
               </motion.div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Panduan Model PELITA Section */}
-      <section id="panduan" className="relative w-full bg-slate-900 py-20 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            {/* Left Side - Book Cover */}
-            <div className="relative">
-              <motion.div
-                initial={{ opacity: 0, x: -30 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.8 }}
-                viewport={{ once: true }}
-                className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 shadow-xl hover:shadow-2xl transition-shadow duration-300"
-              >
-                <div className="relative overflow-hidden rounded-xl">
-                  <Image
-                    src="/BukuPanduan.png"
-                    alt="Buku Panduan Model PELITA"
-                    width={600}
-                    height={800}
-                    className="w-full h-auto object-cover rounded-xl shadow-lg hover:shadow-2xl transition-shadow duration-300"
-                  />
+        {/* ── Panduan Model Section ──────────────────────────────────── */}
+        <section id="panduan" className="relative w-full py-24 overflow-hidden section-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-14 items-center">
+              {/* Book cover */}
+              <motion.div initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.8 }} viewport={{ once: true }}>
+                <div className="glass-card glass-card-hover p-6">
+                  <Image src="/BukuPanduan.png" alt="Buku Panduan Model PELITA" width={600} height={800}
+                    className="w-full h-auto object-cover rounded-xl shadow-lg" />
                 </div>
               </motion.div>
-            </div>
 
-            {/* Right Side - Description & Download */}
-            <div className="space-y-6">
-              <motion.div
-                initial={{ opacity: 0, x: 30 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.8 }}
-                viewport={{ once: true }}
-              >
-                <h3 className="text-4xl font-bold text-white mb-6">
-                  Panduan Model PELITA
-                </h3>
-                <p className="text-lg text-gray-300 leading-relaxed mb-6">
-                  Dapatkan panduan lengkap tentang implementasi Model PELITA untuk pengukuran kompetensi digital calon pendidik kejuruan TI. Buku panduan ini berisi landasan konseptual, kerangka kerja, panduan teknis, prosedur analisis CDM-GDINA, dan interpretasi hasil.
-                </p>
-                
-                <div className="space-y-4 text-gray-300 mb-8">
-                  <div className="flex items-start space-x-3">
-                    <div className="w-2 h-2 bg-purple-400 rounded-full mt-2 flex-shrink-0"></div>
-                    <p><span className="font-semibold text-purple-400">Landasan Konseptual:</span> Teori dan konsep dasar pengukuran kompetensi digital</p>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <div className="w-2 h-2 bg-indigo-400 rounded-full mt-2 flex-shrink-0"></div>
-                    <p><span className="font-semibold text-indigo-400">Kerangka Kerja:</span> Framework PELITA dengan 4 dimensi kompetensi terintegrasi</p>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <div className="w-2 h-2 bg-cyan-400 rounded-full mt-2 flex-shrink-0"></div>
-                    <p><span className="font-semibold text-cyan-400">Panduan Teknis:</span> Langkah-langkah implementasi dan praktik terbaik</p>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <div className="w-2 h-2 bg-emerald-400 rounded-full mt-2 flex-shrink-0"></div>
-                    <p><span className="font-semibold text-emerald-400">Analisis CDM-GDINA:</span> Prosedur analisis statistik dan interpretasi hasil assessment</p>
-                  </div>
-                </div>
-
-                {/* Download Button */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8, delay: 0.3 }}
-                  viewport={{ once: true }}
-                >
-                  <a
-                    href="/BukuPanduan_PELITA.pdf"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-8 py-4 rounded-full font-semibold text-lg transform hover:scale-105 transition-all duration-300 shadow-xl hover:shadow-purple-500/30"
-                  >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    Unduh Buku Panduan
-                  </a>
-                  <p className="text-sm text-gray-400 mt-3">
-                    * File tersedia dalam format PDF
+              {/* Text */}
+              <motion.div initial={{ opacity: 0, x: 30 }} whileInView={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.8 }} viewport={{ once: true }} className="space-y-6">
+                <div>
+                  <div className="pill-badge mb-4">Model</div>
+                  <h3 className="text-4xl font-bold text-white mb-4">PELITA Model Guide</h3>
+                  <div className="accent-line mb-6" />
+                  <p className="text-slate-400 leading-relaxed mb-6">
+                    Get the complete implementation guide for the PELITA Model — covering conceptual foundations, framework structure, technical guidelines, CDM-GDINA analysis procedures, and result interpretation.
                   </p>
+                </div>
+                <div className="space-y-3.5">
+                  {[
+                    { dot: "#7C3AED", label: "Conceptual Foundation:", desc: "Theory and core concepts of digital competency assessment" },
+                    { dot: "#0D9488", label: "Framework Structure:", desc: "PELITA framework with 4 integrated competency dimensions" },
+                    { dot: "#4F46E5", label: "Technical Guidelines:", desc: "Step-by-step implementation and best practices" },
+                    { dot: "#0891B2", label: "CDM-GDINA Analysis:", desc: "Statistical analysis procedures and result interpretation" },
+                  ].map((item) => (
+                    <div key={item.label} className="flex items-start gap-3">
+                      <span className="mt-2 w-2 h-2 rounded-full flex-shrink-0" style={{ background: item.dot }} />
+                      <p className="text-slate-300 text-sm leading-relaxed">
+                        <span className="font-semibold text-white">{item.label}</span>{' '}{item.desc}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+                <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.7, delay: 0.2 }} viewport={{ once: true }} className="pt-2">
+                  <a href="/BukuPanduan_PELITA.pdf" target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-3 btn-primary text-base">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Download Guide
+                  </a>
+                  <p className="text-xs text-slate-500 mt-2">Available in PDF format</p>
                 </motion.div>
               </motion.div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Kisi-kisi Section */}
-      <section className="relative w-full bg-black py-20 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <h3 className="text-4xl font-bold text-white mb-6">
-              Kisi-kisi Kompetensi Digital
-            </h3>
-            <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-              Klik pada setiap indikator untuk melihat penjelasan detail kompetensi yang akan diukur
-            </p>
-          </motion.div>
+        {/* ── Kisi-kisi Section ──────────────────────────────────────── */}
+        <section className="relative w-full py-24 overflow-hidden section-c">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7 }} viewport={{ once: true }} className="text-center mb-14">
+              <div className="pill-badge mb-4 mx-auto w-fit">Competency</div>
+              <h3 className="text-4xl font-bold text-white mb-4">Digital Competency Framework</h3>
+              <div className="accent-line mx-auto mb-4" />
+              <p className="text-slate-400 max-w-2xl mx-auto">
+                Click on any indicator to view a detailed description of the competency being assessed
+              </p>
+            </motion.div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Left Side - Interactive Kisi-kisi Layout */}
-            <div className="lg:col-span-2">
-              <div className="bg-slate-800/80 backdrop-blur-sm rounded-2xl p-8 border border-slate-700/50 shadow-lg">
-                
-                {/* Kisi-kisi Layout Recreation - Light Theme */}
-                <div className="bg-slate-800/80 backdrop-blur-md rounded-xl p-6 min-h-[600px] border border-slate-700/50 relative overflow-hidden shadow-lg">
-                  
-                  {/* Background glow effects */}
-                  <div className="absolute top-0 left-0 w-32 h-32 bg-purple-500/20 rounded-full blur-3xl"></div>
-                  <div className="absolute bottom-0 right-0 w-40 h-40 bg-cyan-500/20 rounded-full blur-3xl"></div>
-                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl"></div>
-                  
-                  {/* Grid Layout for better organization */}
-                  <div className="grid grid-cols-2 gap-8 h-full relative z-10">
-                    
-                    {/* Left Column */}
-                    <div className="space-y-8">
-                      
-                      {/* Kompetensi 1 - Konten Teknologi Informasi */}
-                      <div className="bg-gradient-to-br from-slate-800/50 to-slate-700/50 backdrop-blur-sm rounded-xl p-5 border border-slate-600/50 shadow-lg hover:shadow-cyan-500/20 transition-all duration-300 group">
-                        <div className="flex items-center mb-4">
-                          <div className="w-11 h-11 bg-gradient-to-br from-cyan-400 to-cyan-600 text-white flex items-center justify-center text-lg font-bold transform rotate-45 mr-4 shadow-lg shadow-cyan-500/30 group-hover:shadow-cyan-500/50 transition-shadow duration-300">
-                            1
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Kisi-kisi grid */}
+              <div className="lg:col-span-2">
+                <div className="glass-card p-6">
+                  <div className="grid grid-cols-2 gap-6">
+                    {DIMENSIONS.map((dim) => (
+                      <div key={dim.id}
+                        className="rounded-xl p-4 border border-white/[0.06] transition-all duration-300"
+                        style={{ background: 'rgba(15,23,42,0.5)' }}>
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className={`w-10 h-10 bg-gradient-to-br ${dim.badgeGradient} text-white flex items-center justify-center text-sm font-bold rounded-lg shadow-lg ${dim.badgeShadow}`}>
+                            {dim.id}
                           </div>
                           <div>
-                            <h4 className="text-lg font-bold text-cyan-400 group-hover:text-cyan-300 transition-colors">Konten Teknologi Informasi</h4>
-                            <p className="text-sm text-cyan-500/80">Calon Pendidik</p>
+                            <h4 className={`text-sm font-bold leading-tight ${dim.headerText}`}>{dim.label}</h4>
                           </div>
                         </div>
-                        
-                        <div className="space-y-2">
-                          {[
-                            { id: "1.1", title: "Rekayasa Perangkat Lunak" },
-                            { id: "1.2", title: "Pengembangan Gim" },
-                            { id: "1.3", title: "Sistem Informasi, Jaringan, dan Aplikasi" },
-                            { id: "1.4", title: "Teknik Komputer dan Jaringan" },
-                            { id: "1.5", title: "Teknik Jaringan Akses Telekomunikasi" },
-                            { id: "1.6", title: "Teknik Transmisi Telekomunikasi" }
-                          ].map((item) => (
-                            <div key={item.id} className="flex items-center py-1 group/item">
-                              <div className="w-7 h-7 bg-gradient-to-br from-cyan-400 to-cyan-600 text-white flex items-center justify-center text-xs font-bold transform rotate-45 mr-3 flex-shrink-0 shadow-sm group-hover/item:shadow-cyan-500/40 transition-shadow duration-200">
-                                {item.id}
-                              </div>
-                              <button 
-                                onClick={() => setSelectedIndicator(item.id)}
-                                className={`text-cyan-300 hover:text-cyan-100 transition-all cursor-pointer text-left text-sm font-medium hover:bg-cyan-500/20 px-3 py-2 rounded-lg flex-1 border border-transparent hover:border-cyan-400/50 backdrop-blur-sm ${selectedIndicator === item.id ? 'bg-cyan-500/30 border-cyan-400/50 text-cyan-100' : ''}`}
-                              >
-                                {item.title}
-                              </button>
-                            </div>
+                        <div className="space-y-1.5">
+                          {dim.indicators.map((item) => (
+                            <button key={item.id} onClick={() => setSelectedIndicator(item.id)}
+                              className={`indicator-btn border ${dim.hoverClass} ${
+                                selectedIndicator === item.id ? dim.activeClass : 'text-slate-400 border-transparent'
+                              }`}>
+                              <span className="font-mono text-xs mr-2 opacity-60">{item.id}</span>
+                              {item.title}
+                            </button>
                           ))}
                         </div>
                       </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
 
-                      {/* Kompetensi 3 - Profesionalisme Digital */}
-                      <div className="bg-gradient-to-br from-slate-800/50 to-slate-700/50 backdrop-blur-sm rounded-xl p-5 border border-slate-600/50 shadow-lg hover:shadow-pink-500/20 transition-all duration-300 group">
-                        <div className="flex items-center mb-4">
-                          <div className="w-11 h-11 bg-gradient-to-br from-pink-400 to-pink-600 text-white flex items-center justify-center text-lg font-bold transform rotate-45 mr-4 shadow-lg shadow-pink-500/30 group-hover:shadow-pink-500/50 transition-shadow duration-300">
-                            3
-                          </div>
-                          <div>
-                            <h4 className="text-lg font-bold text-pink-400 group-hover:text-pink-300 transition-colors">Profesionalisme Digital</h4>
-                            <p className="text-sm text-pink-500/80">Calon Pendidik</p>
-                          </div>
-                        </div>
-                        
-                        <div className="space-y-2">
-                          {[
-                            { id: "3.1", title: "Etika Digital" },
-                            { id: "3.2", title: "Praktik Reflektif" },
-                            { id: "3.3", title: "Hubungan dengan Industri" },
-                            { id: "3.4", title: "Kepemimpinan Digital" }
-                          ].map((item) => (
-                            <div key={item.id} className="flex items-center py-1 group/item">
-                              <div className="w-7 h-7 bg-gradient-to-br from-pink-400 to-pink-600 text-white flex items-center justify-center text-xs font-bold transform rotate-45 mr-3 flex-shrink-0 shadow-sm group-hover/item:shadow-pink-500/40 transition-shadow duration-200">
-                                {item.id}
-                              </div>
-                              <button 
-                                onClick={() => setSelectedIndicator(item.id)}
-                                className={`text-pink-300 hover:text-pink-100 transition-all cursor-pointer text-left text-sm font-medium hover:bg-pink-500/20 px-3 py-2 rounded-lg flex-1 border border-transparent hover:border-pink-400/50 backdrop-blur-sm ${selectedIndicator === item.id ? 'bg-pink-500/30 border-pink-400/50 text-pink-100' : ''}`}
-                              >
-                                {item.title}
-                              </button>
-                            </div>
-                          ))}
-                        </div>
+              {/* Detail panel */}
+              <div className="space-y-5">
+                <AnimatePresence mode="wait">
+                  {selectedIndicator ? (
+                    <motion.div key={selectedIndicator}
+                      initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.25 }}
+                      className="glass-card p-6">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="font-mono text-xs text-slate-500">Indicator {selectedIndicator}</span>
+                        <button onClick={() => setSelectedIndicator(null)}
+                          className="text-slate-500 hover:text-white transition-colors text-lg leading-none">×</button>
                       </div>
+                      <h4 className="text-lg font-bold text-white mb-3">
+                        {INDICATOR_DATA[selectedIndicator]?.title}
+                      </h4>
+                      <div className="accent-line mb-4" style={{
+                        background: `linear-gradient(90deg, ${selectedDim?.dotColor ?? '#7C3AED'}, #0D9488)`
+                      }} />
+                      <p className="text-sm text-slate-400 leading-relaxed">
+                        {INDICATOR_DATA[selectedIndicator]?.description}
+                      </p>
+                    </motion.div>
+                  ) : (
+                    <motion.div key="empty"
+                      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                      className="glass-card p-8 text-center">
+                      <div className="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center text-2xl"
+                        style={{ background: 'rgba(124,58,237,0.12)', border: '1px solid rgba(124,58,237,0.25)' }}>
+                        🎯
+                      </div>
+                      <h4 className="text-base font-semibold text-white mb-2">Select an Indicator</h4>
+                      <p className="text-sm text-slate-500 leading-relaxed">
+                        Click any indicator in the framework to view a detailed explanation of the competency.
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Stats */}
+                <div className="grid grid-cols-2 gap-4">
+                  {[
+                    { value: "4", label: "Core Dimensions", color: "#7C3AED" },
+                    { value: "18", label: "Total Indicators", color: "#0D9488" },
+                  ].map((stat) => (
+                    <div key={stat.label} className="glass-card p-4 text-center">
+                      <div className="text-3xl font-bold mb-1" style={{ color: stat.color }}>{stat.value}</div>
+                      <div className="text-xs text-slate-500">{stat.label}</div>
                     </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
 
-                    {/* Right Column */}
-                    <div className="space-y-8">
-                      
-                      {/* Kompetensi 2 - Pedagogik Digital */}
-                      <div className="bg-gradient-to-br from-slate-800/50 to-slate-700/50 backdrop-blur-sm rounded-xl p-5 border border-slate-600/50 shadow-lg hover:shadow-purple-500/20 transition-all duration-300 group">
-                        <div className="flex items-center mb-4">
-                          <div className="w-11 h-11 bg-gradient-to-br from-purple-400 to-purple-600 text-white flex items-center justify-center text-lg font-bold transform rotate-45 mr-4 shadow-lg shadow-purple-500/30 group-hover:shadow-purple-500/50 transition-shadow duration-300">
-                            2
-                          </div>
-                          <div>
-                            <h4 className="text-lg font-bold text-purple-400 group-hover:text-purple-300 transition-colors">Pedagogik Digital</h4>
-                            <p className="text-sm text-purple-500/80">Calon Pendidik</p>
-                          </div>
-                        </div>
-                        
-                        <div className="space-y-2">
-                          {[
-                            { id: "2.1", title: "Perancangan Pembelajaran Digital" },
-                            { id: "2.2", title: "Pembelajaran Kolaboratif" },
-                            { id: "2.3", title: "Desain Pembelajaran Mandiri" },
-                            { id: "2.4", title: "Strategi Asesmen dan Umpan Balik Digital" }
-                          ].map((item) => (
-                            <div key={item.id} className="flex items-center py-1 group/item">
-                              <div className="w-7 h-7 bg-gradient-to-br from-purple-400 to-purple-600 text-white flex items-center justify-center text-xs font-bold transform rotate-45 mr-3 flex-shrink-0 shadow-sm group-hover/item:shadow-purple-500/40 transition-shadow duration-200">
-                                {item.id}
-                              </div>
-                              <button 
-                                onClick={() => setSelectedIndicator(item.id)}
-                                className={`text-purple-300 hover:text-purple-100 transition-all cursor-pointer text-left text-sm font-medium hover:bg-purple-500/20 px-3 py-2 rounded-lg flex-1 border border-transparent hover:border-purple-400/50 backdrop-blur-sm ${selectedIndicator === item.id ? 'bg-purple-500/30 border-purple-400/50 text-purple-100' : ''}`}
-                              >
-                                {item.title}
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
+        {/* ── Map Section ───────────────────────────────────────────── */}
+        <MapSection />
 
-                      {/* Kompetensi 4 - Keterlibatan Sosial Digital */}
-                      <div className="bg-gradient-to-br from-slate-800/50 to-slate-700/50 backdrop-blur-sm rounded-xl p-5 border border-slate-600/50 shadow-lg hover:shadow-emerald-500/20 transition-all duration-300 group">
-                        <div className="flex items-center mb-4">
-                          <div className="w-11 h-11 bg-gradient-to-br from-emerald-400 to-emerald-600 text-white flex items-center justify-center text-lg font-bold transform rotate-45 mr-4 shadow-lg shadow-emerald-500/30 group-hover:shadow-emerald-500/50 transition-shadow duration-300">
-                            4
-                          </div>
-                          <div>
-                            <h4 className="text-lg font-bold text-emerald-400 group-hover:text-emerald-300 transition-colors">Keterlibatan Sosial Digital</h4>
-                            <p className="text-sm text-emerald-500/80">Calon Pendidik</p>
-                          </div>
-                        </div>
-                        
-                        <div className="space-y-2">
-                          {[
-                            { id: "4.1", title: "Aksesibilitas & inklusi" },
-                            { id: "4.2", title: "Jaringan profesional" },
-                            { id: "4.3", title: "Kolaborasi digital" },
-                            { id: "4.4", title: "Komunikasi digital" }
-                          ].map((item) => (
-                            <div key={item.id} className="flex items-center py-1 group/item">
-                              <div className="w-7 h-7 bg-gradient-to-br from-emerald-400 to-emerald-600 text-white flex items-center justify-center text-xs font-bold transform rotate-45 mr-3 flex-shrink-0 shadow-sm group-hover/item:shadow-emerald-500/40 transition-shadow duration-200">
-                                {item.id}
-                              </div>
-                              <button 
-                                onClick={() => setSelectedIndicator(item.id)}
-                                className={`text-emerald-300 hover:text-emerald-100 transition-all cursor-pointer text-left text-sm font-medium hover:bg-emerald-500/20 px-3 py-2 rounded-lg flex-1 border border-transparent hover:border-emerald-400/50 backdrop-blur-sm ${selectedIndicator === item.id ? 'bg-emerald-500/30 border-emerald-400/50 text-emerald-100' : ''}`}
-                              >
-                                {item.title}
-                              </button>
-                            </div>
-                          ))}
-                        </div>
+        {/* ── Technology Section ────────────────────────────────────── */}
+        <section className="py-24 section-d">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7 }} viewport={{ once: true }} className="text-center mb-14">
+              <div className="pill-badge mb-4 mx-auto w-fit">Stack</div>
+              <h3 className="text-4xl font-bold text-white mb-4">Technology Stack</h3>
+              <div className="accent-line mx-auto mb-4" />
+              <p className="text-slate-400">This assessment platform is built with:</p>
+            </motion.div>
+
+            <div className="relative overflow-hidden">
+              <div className="flex animate-scroll">
+                {[...Array(2)].map((_, setIdx) => (
+                  <div key={setIdx} className="flex items-center gap-20 flex-shrink-0 px-10">
+                    {TECH_LOGOS.map((logo) => (
+                      <div key={logo.alt}
+                        className="opacity-40 hover:opacity-80 transition-all duration-300 hover:scale-110 flex-shrink-0">
+                        <Image src={logo.src} alt={`${logo.alt} Logo`} width={100} height={100}
+                          className="object-contain grayscale hover:grayscale-0 transition-all duration-300" />
                       </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Footer ────────────────────────────────────────────────── */}
+        <footer id="contact" className="py-16 border-t" style={{ background: '#020817', borderColor: 'rgba(255,255,255,0.06)' }}>
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="flex justify-center">
+              <div className="max-w-lg text-center">
+                <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6 }} viewport={{ once: true }}>
+                  {/* Logos: Undiksha · UNY · PELITA */}
+                  <div className="flex items-center justify-center gap-4 mb-5">
+                    <Image src="/Logo_undiksha.png" alt="Undiksha Logo" width={48} height={48} className="object-contain" />
+                    <div className="w-px h-8 bg-white/15 rounded-full" />
+                    <Image src="/logo_uny.png" alt="UNY Logo" width={48} height={48} className="object-contain" />
+                    <div className="w-px h-8 bg-white/15 rounded-full" />
+                    <Image src="/logo_pelita.png" alt="PELITA Logo" width={48} height={48} className="object-contain" />
+                  </div>
+                  <h3 className="text-xl font-bold gradient-text-violet mb-3">PELITA</h3>
+                  <p className="text-slate-500 text-sm mb-6 leading-relaxed">
+                    An online digital competency assessment platform for prospective vocational IT educators, built on the PELITA framework with GDINA integration.
+                  </p>
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="flex items-center gap-2.5 text-slate-500 text-sm">
+                      <Mail className="w-4 h-4 text-violet-500" />
+                      <span>iwiradika@undiksha.ac.id</span>
+                    </div>
+                    <div className="flex items-center gap-2.5 text-slate-500 text-sm">
+                      <MapPin className="w-4 h-4 text-teal-500" />
+                      <span>Yogyakarta, Indonesia</span>
                     </div>
                   </div>
-                </div>
+                </motion.div>
               </div>
             </div>
 
-            {/* Right Side - Detail Panel */}
-            <div className="space-y-6">
-              {selectedIndicator ? (
-                <div className="bg-slate-800/90 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 shadow-xl">
-                  <div className="flex items-center justify-between mb-4">
-                    <h4 className="text-2xl font-bold text-white">
-                      Indikator {selectedIndicator}
-                    </h4>
-                    <button
-                      onClick={() => setSelectedIndicator(null)}
-                      className="text-gray-400 hover:text-gray-200 transition-colors"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                  
-                  <h5 className="text-xl font-semibold text-indigo-400 mb-4">
-                    {indicatorData[selectedIndicator as keyof typeof indicatorData]?.title}
-                  </h5>
-                  
-                  <p className="text-gray-300 leading-relaxed">
-                    {indicatorData[selectedIndicator as keyof typeof indicatorData]?.description}
-                  </p>
-                </div>
-              ) : (
-                <div className="bg-slate-700/90 backdrop-blur-sm rounded-2xl p-8 border border-slate-600/50 text-center">
-                  <div className="text-6xl mb-4">🎯</div>
-                  <h4 className="text-xl font-semibold text-white mb-3">
-                    Pilih Indikator
-                  </h4>
-                  <p className="text-gray-300">
-                    Klik pada salah satu indikator di kisi-kisi untuk melihat penjelasan detail tentang kompetensi yang akan diukur.
-                  </p>
-                </div>
-              )}
+            <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.4 }} viewport={{ once: true }}
+              className="mt-12 pt-8 text-center" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+              <p className="text-slate-600 text-sm">
+                © {new Date().getFullYear()} Wiradika, I.N.I., Hadi, S., Khairudin, M. All rights reserved.
+              </p>
+            </motion.div>
+          </div>
+        </footer>
 
-              {/* Summary Cards */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg p-4 border border-slate-600/50">
-                  <div className="text-2xl font-bold text-cyan-400">4</div>
-                  <div className="text-sm text-cyan-300">Kompetensi Utama</div>
-                </div>
-                <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg p-4 border border-slate-600/50">
-                  <div className="text-2xl font-bold text-purple-400">18</div>
-                  <div className="text-sm text-purple-300">Total Indikator</div>
-                </div>
+        {/* ── Fullscreen Modal ──────────────────────────────────────── */}
+        <AnimatePresence>
+          {isFullscreen && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
+              style={{ background: 'rgba(2,8,23,0.92)' }}
+              onClick={() => setIsFullscreen(false)}>
+              <div className="relative max-w-6xl max-h-full">
+                <button onClick={() => setIsFullscreen(false)}
+                  className="absolute -top-4 -right-4 w-10 h-10 rounded-full bg-white text-slate-900 flex items-center justify-center hover:bg-slate-200 transition-colors z-10 font-bold">
+                  ×
+                </button>
+                <Image src="/framwork.png" alt="Framework Asesmen PELITA" width={1200} height={800}
+                  className="max-w-full max-h-[90vh] object-contain rounded-xl shadow-2xl"
+                  onClick={(e) => e.stopPropagation()} />
               </div>
-            </div>
-          </div>
-        </div>
-      </section>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-
-      <MapSection />
-
-
-      {/* Technology Section */}
-      <section className="py-20 bg-black">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <h3 className="text-4xl md:text-5xl font-bold text-white mb-6">Dukungan Teknologi</h3>
-            <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-              Asesmen ini dikembangkan berbantu teknologi:
-            </p>
-          </motion.div>
-          
-          {/* Running Text Container */}
-          <div className="relative overflow-hidden">
-            <div className="flex animate-scroll space-x-32 whitespace-nowrap">
-              {/* First set of logos */}
-              <div className="flex items-center space-x-32 flex-shrink-0">
-                {/* React Logo */}
-                <div className="opacity-60 hover:opacity-100 transition-opacity duration-300">
-                  <Image
-                    src="/react_logo.png"
-                    alt="React Logo"
-                    width={120}
-                    height={120}
-                    className="object-contain grayscale"
-                  />
-                </div>
-
-                {/* Node.js Logo */}
-                <div className="opacity-60 hover:opacity-100 transition-opacity duration-300">
-                  <Image
-                    src="/nodejs_logo.png"
-                    alt="Node.js Logo"
-                    width={120}
-                    height={120}
-                    className="object-contain grayscale"
-                  />
-                </div>
-
-                {/* MongoDB Logo */}
-                <div className="opacity-60 hover:opacity-100 transition-opacity duration-300">
-                  <Image
-                    src="/mongodblogo.png.jpeg"
-                    alt="MongoDB Logo"
-                    width={120}
-                    height={120}
-                    className="object-contain grayscale"
-                  />
-                </div>
-
-                {/* R Logo */}
-                <div className="opacity-60 hover:opacity-100 transition-opacity duration-300">
-                  <Image
-                    src="/R_logo-2.svg"
-                    alt="R Logo"
-                    width={120}
-                    height={120}
-                    className="object-contain grayscale"
-                  />
-                </div>
-              </div>
-
-              {/* Duplicate set for seamless loop */}
-              <div className="flex items-center space-x-32 flex-shrink-0">
-                {/* React Logo */}
-                <div className="opacity-60 hover:opacity-100 transition-opacity duration-300">
-                  <Image
-                    src="/react_logo.png"
-                    alt="React Logo"
-                    width={120}
-                    height={120}
-                    className="object-contain grayscale"
-                  />
-                </div>
-
-                {/* Node.js Logo */}
-                <div className="opacity-60 hover:opacity-100 transition-opacity duration-300">
-                  <Image
-                    src="/nodejs_logo.png"
-                    alt="Node.js Logo"
-                    width={120}
-                    height={120}
-                    className="object-contain grayscale"
-                  />
-                </div>
-
-                {/* MongoDB Logo */}
-                <div className="opacity-60 hover:opacity-100 transition-opacity duration-300">
-                  <Image
-                    src="/mongodblogo.png.jpeg"
-                    alt="MongoDB Logo"
-                    width={120}
-                    height={120}
-                    className="object-contain grayscale"
-                  />
-                </div>
-
-                {/* R Logo */}
-                <div className="opacity-60 hover:opacity-100 transition-opacity duration-300">
-                  <Image
-                    src="/R_logo-2.svg"
-                    alt="R Logo"
-                    width={120}
-                    height={120}
-                    className="object-contain grayscale"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="bg-black text-white py-16">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex justify-center">
-            {/* Brand Section */}
-            <div className="max-w-lg">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-                viewport={{ once: true }}
-              >
-                <div className="flex items-center space-x-3 mb-4">
-                  <Image
-                    src="/logo.png"
-                    alt="PELITA Logo"
-                    width={32}
-                    height={32}
-                    className="rounded-lg"
-                  />
-                  <h3 className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
-                    PELITA
-                  </h3>
-                </div>
-                <p className="text-gray-400 mb-6 leading-relaxed">
-                  Platform pengukuran online kompetensi digital untuk calon pendidik kejuruan TI dengan framework yang sesuai konteks Indonesia serta Integrasi Generalized Deterministic-Input, Noisy 'And' Gate Model.
-                </p>
-                
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3 text-gray-400">
-                    <Mail className="w-5 h-5" />
-                    <span>inyoman.2020@student.uny.ac.id</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-gray-400">
-                    <MapPin className="w-5 h-5" />
-                    <span>Yogyakarta, Indonesia</span>
-                  </div>
-                </div>
-              </motion.div>
-            </div>
-          </div>
-
-
-          {/* Bottom Section */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.6 }}
-            viewport={{ once: true }}
-            className="mt-12 pt-8 border-t border-slate-700/50 text-center"
-          >
-            <div className="text-gray-400 text-sm">
-              © 2024 Wiradika, I.N.I., Hadi, S., Khairudin, M.. Semua hak dilindungi.
-            </div>
-          </motion.div>
-        </div>
-      </footer>
-
-      {/* Fullscreen Modal */}
-      {isFullscreen && (
-        <div 
-          className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-          onClick={() => setIsFullscreen(false)}
-        >
-          <div className="relative max-w-6xl max-h-full">
-            {/* Close button */}
-            <button
-              onClick={() => setIsFullscreen(false)}
-              className="absolute -top-4 -right-4 bg-white text-black rounded-full w-10 h-10 flex items-center justify-center hover:bg-gray-200 transition-colors z-10"
-            >
-              ✕
-            </button>
-            
-            {/* Fullscreen image */}
-            <Image
-              src="/framwork.png"
-              alt="Framework Asesmen PELITA"
-              width={1200}
-              height={800}
-              className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
-              onClick={(e) => e.stopPropagation()}
-            />
-          </div>
-        </div>
-      )}
-
-    </div>
-    <AIChat />
+      </div>
+      <AIChat />
     </>
   );
 }

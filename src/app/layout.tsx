@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "pelita model",
-  description: "Platform assessment kompetensi digital untuk calon pendidik kejuruan TI dengan teknologi AI dan visualisasi 3D interaktif",
+  title: "PELITA — Online Digital Competency Assessment",
+  description: "A digital competency assessment platform for prospective vocational IT educators, based on the PELITA Framework and CDM-GDINA model.",
   icons: {
     icon: '/pavicon_pelitamodel.png',
     shortcut: '/pavicon_pelitamodel.png',
