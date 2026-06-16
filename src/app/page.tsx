@@ -140,6 +140,7 @@ export default function Home() {
   const [selectedIndicator, setSelectedIndicator] = useState<string | null>(null);
   const [showHeader, setShowHeader] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showAccessModal, setShowAccessModal] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -206,10 +207,10 @@ export default function Home() {
                     </a>
                   ))}
                 </nav>
-                <a href="https://assessment.pelita-framework.cloud" target="_blank" rel="noopener noreferrer"
+                <button onClick={() => setShowAccessModal(true)}
                   className="hidden md:inline-block btn-primary text-sm px-5 py-2.5">
                   Try PELITA
-                </a>
+                </button>
                 <button className="md:hidden text-slate-400 hover:text-white transition-colors"
                   onClick={() => setMobileMenuOpen(v => !v)} aria-label="Toggle menu">
                   {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -230,10 +231,11 @@ export default function Home() {
                     {link.label}
                   </a>
                 ))}
-                <a href="https://assessment.pelita-framework.cloud" target="_blank" rel="noopener noreferrer"
-                  className="block mt-3 btn-primary text-center text-sm">
+                <button
+                  className="block mt-3 w-full btn-primary text-center text-sm cursor-pointer"
+                  onClick={() => { setMobileMenuOpen(false); setShowAccessModal(true); }}>
                   Try PELITA Now
-                </a>
+                </button>
               </motion.div>
             )}
           </AnimatePresence>
@@ -284,10 +286,10 @@ export default function Home() {
 
             <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, delay: 1 }}
               className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a href="https://assessment.pelita-framework.cloud" target="_blank" rel="noopener noreferrer"
+              <button onClick={() => setShowAccessModal(true)}
                 className="btn-primary text-base glow-pulse">
                 Start Assessment
-              </a>
+              </button>
               <a href="#about" className="btn-outline text-base">
                 Explore Framework
               </a>
@@ -596,6 +598,83 @@ export default function Home() {
             </motion.div>
           </div>
         </footer>
+
+        {/* ── Limited Access Modal ─────────────────────────────────── */}
+        <AnimatePresence>
+          {showAccessModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
+              style={{ background: 'rgba(2,8,23,0.85)' }}
+              onClick={() => setShowAccessModal(false)}
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 16 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 16 }}
+                transition={{ duration: 0.25 }}
+                className="glass-card w-full max-w-md p-8 relative"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Close */}
+                <button
+                  onClick={() => setShowAccessModal(false)}
+                  className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors text-xl leading-none"
+                >
+                  ×
+                </button>
+
+                {/* Icon */}
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-6"
+                  style={{ background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.3)' }}>
+                  <svg className="w-7 h-7" fill="none" stroke="#A78BFA" viewBox="0 0 24 24" strokeWidth={1.8}>
+                    <path strokeLinecap="round" strokeLinejoin="round"
+                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
+
+                {/* Heading */}
+                <div className="text-center mb-6">
+                  <span className="pill-badge mb-3 mx-auto">Limited Access</span>
+                  <h3 className="text-2xl font-bold text-white mt-3 mb-3">
+                    Access by Request
+                  </h3>
+                  <p className="text-slate-400 text-sm leading-relaxed">
+                    PELITA is currently available to a <span className="text-white font-medium">limited group of participants</span> as part of an ongoing research study. Public access will be opened in a future release.
+                  </p>
+                </div>
+
+                {/* Divider */}
+                <div className="accent-line mx-auto mb-6" />
+
+                {/* CTA */}
+                <div className="text-center space-y-3">
+                  <p className="text-slate-400 text-sm">
+                    To request access or learn more about the study, please contact us at:
+                  </p>
+                  <a
+                    href="mailto:iwiradika@undiksha.ac.id"
+                    className="inline-flex items-center gap-2.5 px-5 py-3 rounded-xl text-sm font-semibold text-white transition-all duration-200"
+                    style={{ background: 'rgba(124,58,237,0.2)', border: '1px solid rgba(124,58,237,0.4)' }}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(124,58,237,0.35)')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'rgba(124,58,237,0.2)')}
+                  >
+                    <svg className="w-4 h-4 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round"
+                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    iwiradika@undiksha.ac.id
+                  </a>
+                  <p className="text-slate-600 text-xs pt-1">
+                    We will respond within 1–2 business days.
+                  </p>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* ── Fullscreen Modal ──────────────────────────────────────── */}
         <AnimatePresence>
